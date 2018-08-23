@@ -1,9 +1,9 @@
-package me.xaanit.artemis
+package me.xaanit.artemis.websocket
 
 import com.github.salomonbrys.kotson.jsonObject
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import me.xaanit.artemis.commands.CommandHandler
+import me.xaanit.artemis.websocket.commands.CommandHandler
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
@@ -14,11 +14,9 @@ class ArtemisWebsocket(
         address: InetSocketAddress
 ) : WebSocketServer(address) {
 
-    private var connections: Map<WebSocket, Int> = mapOf()
-
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
         conn.send(jsonObject(
-                "op" to 0,
+                "op" to OpCode.REQUEST_IDENTIFY.code,
                 "d" to jsonObject()
         ))
     }
@@ -28,7 +26,7 @@ class ArtemisWebsocket(
     }
 
     override fun onMessage(conn: WebSocket, message: String) {
-        println("Got message from client with conn [${connections[conn]}] ${conn.localSocketAddress.address}: $message")
+        println("Got message from client with conn ${conn.localSocketAddress.address}: $message")
         val obj = JsonParser().parse(message).asJsonObject
         handler.handle(this, conn, obj, obj.get("shard")?.asInt ?: 0)
     }
@@ -47,11 +45,11 @@ class ArtemisWebsocket(
     }
 
 
-    private fun WebSocket.send(json: JsonObject) {
+    fun WebSocket.send(json: JsonObject) {
         send(json.toString())
     }
 
-    fun addConnection(conn: WebSocket, shard: Int) {
-        this.connections += conn to shard
+    fun send(json: JsonObject) {
+        connections.forEach { it.send(json) }
     }
 }
