@@ -14,7 +14,7 @@ object Application {
     fun main(args: Array<String>) {
         val config = readConfig()
         WebhookHelper.array = config.webhookUrls.toTypedArray()
-        val server = ArtemisWebsocket(
+        ArtemisWebsocket(
                 CommandHandler(config),
                 InetSocketAddress("localhost", 8887)
         ).run()
